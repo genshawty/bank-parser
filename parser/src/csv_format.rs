@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::errors::{ParsingError, TransactionError};
-use crate::{Parser, Status, Transaction, TxType};
+use crate::{Parser, Status, Transaction, TransactionBuilder, TxType};
 
 const CSV_HEADER: &str =
     "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION";
@@ -51,39 +51,18 @@ impl Transaction {
         if cells.len() != 8 {
             return Err(TransactionError::InvalidAmountArguments(cells.len()));
         }
-        let tx_id = cells[0]
-            .parse::<u64>()
-            .map_err(|_| TransactionError::CorruptedField("tx_id".to_string(), cells[0].clone()))?;
-        let tx_type = TxType::from_str(&cells[1]).map_err(|_| {
-            TransactionError::CorruptedField("tx_type".to_string(), cells[1].clone())
-        })?;
-        let from_user_id = cells[2].parse::<u64>().map_err(|_| {
-            TransactionError::CorruptedField("from_user_id".to_string(), cells[2].clone())
-        })?;
-        let to_user_id = cells[3].parse::<u64>().map_err(|_| {
-            TransactionError::CorruptedField("to_user_id".to_string(), cells[3].clone())
-        })?;
-        let amount = cells[4].parse::<u64>().map_err(|_| {
-            TransactionError::CorruptedField("amount".to_string(), cells[4].clone())
-        })?;
-        let timestamp = cells[5].parse::<u64>().map_err(|_| {
-            TransactionError::CorruptedField("timestamp".to_string(), cells[5].clone())
-        })?;
-        let status = Status::from_str(&cells[6]).map_err(|_| {
-            TransactionError::CorruptedField("tx_status".to_string(), cells[6].clone())
-        })?;
-        let description = &cells[7];
 
-        Ok(Transaction {
-            tx_id,
-            tx_type,
-            from_user_id,
-            to_user_id,
-            amount,
-            timestamp,
-            status,
-            description: description.to_string(),
-        })
+        let mut builder = TransactionBuilder::new();
+        builder.tx_id_str(cells[0].clone())?;
+        builder.tx_type_str(cells[1].clone())?;
+        builder.from_user_id_str(cells[2].clone())?;
+        builder.to_user_id_str(cells[3].clone())?;
+        builder.amount_str(cells[4].clone())?;
+        builder.timestamp_str(cells[5].clone())?;
+        builder.status_str(cells[6].clone())?;
+        builder.description_str(cells[7].clone())?;
+
+        builder.build()
     }
 
     fn to_csv_row(&self) -> String {

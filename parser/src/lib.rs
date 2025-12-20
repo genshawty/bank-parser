@@ -1,5 +1,8 @@
+pub mod builder;
 pub mod csv_format;
 pub mod errors;
+pub mod txt_format;
+use builder::TransactionBuilder;
 use std::fmt;
 use std::str::FromStr;
 
