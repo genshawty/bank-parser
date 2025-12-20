@@ -1,4 +1,3 @@
-use std::cell;
 use std::str::FromStr;
 
 use crate::errors::{ParsingError, TransactionError};
@@ -34,6 +33,17 @@ impl Parser {
         }
         Ok(txes)
     }
+
+    pub fn write_to_csv<W: std::io::Write>(
+        w: &mut W,
+        txes: Vec<Transaction>,
+    ) -> std::io::Result<()> {
+        write!(w, "{}\n", CSV_HEADER)?;
+        for tx in txes {
+            write!(w, "{}\n", tx.to_csv_row())?;
+        }
+        Ok(())
+    }
 }
 
 impl Transaction {
@@ -41,9 +51,9 @@ impl Transaction {
         if cells.len() != 8 {
             return Err(TransactionError::InvalidAmountArguments(cells.len()));
         }
-        let tx_id = cells[0].parse::<u64>().map_err(|_| {
-            TransactionError::CorruptedField("tx_id".to_string(), cells[0].clone())
-        })?;
+        let tx_id = cells[0]
+            .parse::<u64>()
+            .map_err(|_| TransactionError::CorruptedField("tx_id".to_string(), cells[0].clone()))?;
         let tx_type = TxType::from_str(&cells[1]).map_err(|_| {
             TransactionError::CorruptedField("tx_type".to_string(), cells[1].clone())
         })?;
@@ -74,6 +84,20 @@ impl Transaction {
             status,
             description: description.to_string(),
         })
+    }
+
+    fn to_csv_row(&self) -> String {
+        format!(
+            "{},{},{},{},{},{},{},\"{}\"",
+            self.tx_id,
+            self.tx_type.clone(),
+            self.from_user_id,
+            self.to_user_id,
+            self.amount,
+            self.timestamp,
+            self.status.clone(),
+            self.description.clone()
+        )
     }
 }
 
@@ -149,7 +173,7 @@ mod tests {
 
         assert!(result.is_err());
         match result.unwrap_err() {
-            ParsingError::IncorrectHeader => {},
+            ParsingError::IncorrectHeader => {}
             _ => panic!("Expected IncorrectHeader error"),
         }
     }
@@ -184,11 +208,7 @@ mod tests {
 
     #[test]
     fn test_transaction_invalid_field_count() {
-        let cells = vec![
-            "1".to_string(),
-            "deposit".to_string(),
-            "100".to_string(),
-        ];
+        let cells = vec!["1".to_string(), "deposit".to_string(), "100".to_string()];
         let result = Transaction::try_from_csv_row(cells);
 
         assert!(result.is_err());
@@ -217,7 +237,7 @@ mod tests {
             TransactionError::CorruptedField(field, value) => {
                 assert_eq!(field, "tx_id");
                 assert_eq!(value, "not_a_number");
-            },
+            }
             _ => panic!("Expected CorruptedField error for tx_id"),
         }
     }
@@ -241,7 +261,7 @@ mod tests {
             TransactionError::CorruptedField(field, value) => {
                 assert_eq!(field, "tx_type");
                 assert_eq!(value, "invalid_type");
-            },
+            }
             _ => panic!("Expected CorruptedField error for tx_type"),
         }
     }
@@ -265,7 +285,7 @@ mod tests {
             TransactionError::CorruptedField(field, value) => {
                 assert_eq!(field, "from_user_id");
                 assert_eq!(value, "invalid");
-            },
+            }
             _ => panic!("Expected CorruptedField error for from_user_id"),
         }
     }
@@ -289,7 +309,7 @@ mod tests {
             TransactionError::CorruptedField(field, value) => {
                 assert_eq!(field, "to_user_id");
                 assert_eq!(value, "invalid");
-            },
+            }
             _ => panic!("Expected CorruptedField error for to_user_id"),
         }
     }
@@ -313,7 +333,7 @@ mod tests {
             TransactionError::CorruptedField(field, value) => {
                 assert_eq!(field, "amount");
                 assert_eq!(value, "invalid");
-            },
+            }
             _ => panic!("Expected CorruptedField error for amount"),
         }
     }
@@ -337,7 +357,7 @@ mod tests {
             TransactionError::CorruptedField(field, value) => {
                 assert_eq!(field, "timestamp");
                 assert_eq!(value, "invalid");
-            },
+            }
             _ => panic!("Expected CorruptedField error for timestamp"),
         }
     }
@@ -361,7 +381,7 @@ mod tests {
             TransactionError::CorruptedField(field, value) => {
                 assert_eq!(field, "tx_status");
                 assert_eq!(value, "invalid_status");
-            },
+            }
             _ => panic!("Expected CorruptedField error for status"),
         }
     }
@@ -426,7 +446,8 @@ mod tests {
 
     #[test]
     fn test_parser_only_header() {
-        let csv_data = "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n";
+        let csv_data =
+            "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n";
         let mut cursor = Cursor::new(csv_data);
         let result = Parser::read_from_csv(&mut cursor);
 
@@ -448,7 +469,7 @@ mod tests {
         match result.unwrap_err() {
             ParsingError::TransactionError(TransactionError::CorruptedField(field, _)) => {
                 assert_eq!(field, "tx_type");
-            },
+            }
             _ => panic!("Expected TransactionError::CorruptedField"),
         }
     }
@@ -485,5 +506,230 @@ mod tests {
 
         assert_eq!(fields.len(), 8);
         assert_eq!(fields[7], "Test");
+    }
+
+    #[test]
+    fn test_to_csv_row_basic() {
+        let transaction = Transaction {
+            tx_id: 1,
+            tx_type: TxType::Deposit,
+            from_user_id: 100,
+            to_user_id: 200,
+            amount: 5000,
+            timestamp: 1234567890,
+            status: Status::Success,
+            description: "Test deposit".to_string(),
+        };
+
+        let csv_row = transaction.to_csv_row();
+        assert_eq!(
+            csv_row,
+            "1,DEPOSIT,100,200,5000,1234567890,success,\"Test deposit\""
+        );
+    }
+
+    #[test]
+    fn test_to_csv_row_empty_description() {
+        let transaction = Transaction {
+            tx_id: 42,
+            tx_type: TxType::Withdrawal,
+            from_user_id: 500,
+            to_user_id: 600,
+            amount: 2500,
+            timestamp: 9876543210,
+            status: Status::Failure,
+            description: "".to_string(),
+        };
+
+        let csv_row = transaction.to_csv_row();
+        assert_eq!(
+            csv_row,
+            "42,WITHDRAWAL,500,600,2500,9876543210,failure,\"\""
+        );
+    }
+
+    #[test]
+    fn test_to_csv_row_description_with_special_chars() {
+        let transaction = Transaction {
+            tx_id: 123,
+            tx_type: TxType::Transfer,
+            from_user_id: 100,
+            to_user_id: 200,
+            amount: 5000,
+            timestamp: 1234567890,
+            status: Status::Pending,
+            description: "Description with, commas and \"quotes\"".to_string(),
+        };
+
+        let csv_row = transaction.to_csv_row();
+        assert_eq!(
+            csv_row,
+            "123,TRANSFER,100,200,5000,1234567890,pending,\"Description with, commas and \"quotes\"\""
+        );
+    }
+
+    #[test]
+    fn test_to_csv_row_roundtrip() {
+        // Test that to_csv_row output can be parsed back with try_from_csv_row
+        let original = Transaction {
+            tx_id: 999,
+            tx_type: TxType::Transfer,
+            from_user_id: 1000,
+            to_user_id: 2000,
+            amount: 15000,
+            timestamp: 1111111111,
+            status: Status::Pending,
+            description: "Roundtrip test".to_string(),
+        };
+
+        let csv_row = original.to_csv_row();
+        let cells = split_line(&csv_row);
+        let parsed = Transaction::try_from_csv_row(cells).unwrap();
+
+        assert_eq!(original.tx_id, parsed.tx_id);
+        assert_eq!(original.from_user_id, parsed.from_user_id);
+        assert_eq!(original.to_user_id, parsed.to_user_id);
+        assert_eq!(original.amount, parsed.amount);
+        assert_eq!(original.timestamp, parsed.timestamp);
+        assert_eq!(original.description, parsed.description);
+    }
+
+    #[test]
+    fn test_write_to_csv_single_transaction() {
+        let mut buffer = Cursor::new(Vec::new());
+        let transactions = vec![Transaction {
+            tx_id: 1,
+            tx_type: TxType::Deposit,
+            from_user_id: 100,
+            to_user_id: 200,
+            amount: 5000,
+            timestamp: 1234567890,
+            status: Status::Success,
+            description: "Test deposit".to_string(),
+        }];
+
+        let result = Parser::write_to_csv(&mut buffer, transactions);
+        assert!(result.is_ok());
+
+        let output = String::from_utf8(buffer.into_inner()).unwrap();
+        let expected = "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n\
+                        1,DEPOSIT,100,200,5000,1234567890,success,\"Test deposit\"\n";
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_write_to_csv_multiple_transactions() {
+        let mut buffer = Cursor::new(Vec::new());
+        let transactions = vec![
+            Transaction {
+                tx_id: 1,
+                tx_type: TxType::Deposit,
+                from_user_id: 100,
+                to_user_id: 200,
+                amount: 5000,
+                timestamp: 1234567890,
+                status: Status::Success,
+                description: "First".to_string(),
+            },
+            Transaction {
+                tx_id: 2,
+                tx_type: TxType::Withdrawal,
+                from_user_id: 200,
+                to_user_id: 100,
+                amount: 3000,
+                timestamp: 1234567891,
+                status: Status::Failure,
+                description: "Second".to_string(),
+            },
+            Transaction {
+                tx_id: 3,
+                tx_type: TxType::Transfer,
+                from_user_id: 100,
+                to_user_id: 300,
+                amount: 1500,
+                timestamp: 1234567892,
+                status: Status::Pending,
+                description: "Third".to_string(),
+            },
+        ];
+
+        let result = Parser::write_to_csv(&mut buffer, transactions);
+        assert!(result.is_ok());
+
+        let output = String::from_utf8(buffer.into_inner()).unwrap();
+        let lines: Vec<&str> = output.split('\n').collect();
+
+        assert_eq!(
+            lines[0],
+            "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION"
+        );
+        assert_eq!(
+            lines[1],
+            "1,DEPOSIT,100,200,5000,1234567890,success,\"First\""
+        );
+        assert_eq!(
+            lines[2],
+            "2,WITHDRAWAL,200,100,3000,1234567891,failure,\"Second\""
+        );
+        assert_eq!(
+            lines[3],
+            "3,TRANSFER,100,300,1500,1234567892,pending,\"Third\""
+        );
+    }
+
+    #[test]
+    fn test_write_to_csv_empty_transactions() {
+        let mut buffer = Cursor::new(Vec::new());
+        let transactions: Vec<Transaction> = vec![];
+
+        let result = Parser::write_to_csv(&mut buffer, transactions);
+        assert!(result.is_ok());
+
+        let output = String::from_utf8(buffer.into_inner()).unwrap();
+        assert_eq!(
+            output,
+            "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION\n"
+        );
+    }
+
+    #[test]
+    fn test_write_then_read_roundtrip() {
+        // Write transactions to CSV, then read them back
+        let original_transactions = vec![
+            Transaction {
+                tx_id: 1,
+                tx_type: TxType::Deposit,
+                from_user_id: 100,
+                to_user_id: 200,
+                amount: 5000,
+                timestamp: 1234567890,
+                status: Status::Success,
+                description: "First transaction".to_string(),
+            },
+            Transaction {
+                tx_id: 2,
+                tx_type: TxType::Transfer,
+                from_user_id: 200,
+                to_user_id: 300,
+                amount: 2500,
+                timestamp: 1234567891,
+                status: Status::Pending,
+                description: "Second transaction".to_string(),
+            },
+        ];
+
+        // Write to buffer
+        let mut write_buffer = Cursor::new(Vec::new());
+        Parser::write_to_csv(&mut write_buffer, original_transactions).unwrap();
+
+        // Read back from buffer
+        let mut read_buffer = Cursor::new(write_buffer.into_inner());
+        let parsed_transactions = Parser::read_from_csv(&mut read_buffer).unwrap();
+
+        assert_eq!(parsed_transactions.len(), 2);
+        assert_eq!(parsed_transactions[0].tx_id, 1);
+        assert_eq!(parsed_transactions[0].description, "First transaction");
+        assert_eq!(parsed_transactions[1].tx_id, 2);
+        assert_eq!(parsed_transactions[1].description, "Second transaction");
     }
 }

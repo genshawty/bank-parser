@@ -5,14 +5,14 @@ use std::str::FromStr;
 
 use crate::errors::TxTypeParseError;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Status {
     Success,
     Failure,
     Pending,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TxType {
     Deposit,
     Transfer,
