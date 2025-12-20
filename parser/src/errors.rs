@@ -7,8 +7,8 @@ pub struct TxTypeParseError(pub String);
 // todo: display and error
 #[derive(Debug)]
 pub enum TransactionError {
-    InvalidAmountArguments,
-    CorruptedField(String),
+    InvalidAmountArguments(usize),
+    CorruptedField(String, String),
 }
 
 // todo: display and error
