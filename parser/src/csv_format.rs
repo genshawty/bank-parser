@@ -3,6 +3,9 @@ use std::cell;
 use crate::errors::{ParsingError, TransactionError};
 use crate::{Parser, Transaction};
 
+const CSV_HEADER: &str =
+    "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION";
+
 fn split_line(line: &str) -> Vec<&str> {
     line.split(",").collect()
 }
@@ -12,20 +15,12 @@ impl Parser {
         let mut txes = Vec::new();
         let mut buf = String::new();
         r.read_to_string(&mut buf)?;
-        let rows = buf.split(",\n");
-        let mut has_started = false;
+        let rows: Vec<&str> = buf.split(",\n").collect();
+        if rows[0] != CSV_HEADER {
+            return Err(ParsingError::IncorrectHeader);
+        }
         for row in rows {
             let cells = split_line(row);
-            // searching for 'Дебет' in 5th cell
-            if !has_started {
-                if cells.len() > 4 && cells[4] == "Дебет" {
-                    has_started = true;
-                }
-                continue;
-            }
-            if cells[1] == "" {
-                break;
-            }
             let tx = Transaction::try_from_csv_row(cells)?;
             txes.push(tx);
         }
@@ -35,6 +30,11 @@ impl Parser {
 
 impl Transaction {
     fn try_from_csv_row(cells: Vec<&str>) -> Result<Self, TransactionError> {
+        let tx_id = cells[0]
+            .parse::<u64>()
+            .map_err(|_| TransactionError::CorruptedField("tx_id".to_string()))?;
+        let tx_type = cells[1].to_string();
+
         Ok(Transaction {})
     }
 }
