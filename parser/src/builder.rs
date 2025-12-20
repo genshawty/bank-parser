@@ -83,7 +83,8 @@ impl TransactionBuilder {
     }
 
     pub fn description_str(&mut self, val: String) -> Result<(), TransactionError> {
-        self.description = Some(val);
+        let description = val.trim_matches('"').to_string();
+        self.description = Some(description);
         Ok(())
     }
 
