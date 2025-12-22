@@ -1,3 +1,4 @@
+pub mod bin_format;
 pub mod builder;
 pub mod csv_format;
 pub mod errors;
@@ -8,14 +9,14 @@ use std::str::FromStr;
 
 use crate::errors::TxTypeParseError;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Status {
     Success,
     Failure,
     Pending,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TxType {
     Deposit,
     Transfer,
@@ -31,6 +32,25 @@ impl FromStr for TxType {
             "withdrawal" => Ok(Self::Withdrawal),
             "transfer" => Ok(Self::Transfer),
             _ => Err(TxTypeParseError(s.to_string())),
+        }
+    }
+}
+
+impl TxType {
+    pub fn from_u8(byte: u8) -> Result<Self, TxTypeParseError> {
+        match byte {
+            0 => Ok(TxType::Deposit),
+            1 => Ok(TxType::Transfer),
+            2 => Ok(TxType::Withdrawal),
+            _ => Err(TxTypeParseError(format!("invalid byte value: {}", byte))),
+        }
+    }
+
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            TxType::Deposit => 0,
+            TxType::Transfer => 1,
+            TxType::Withdrawal => 2,
         }
     }
 }
@@ -55,6 +75,25 @@ impl FromStr for Status {
             "failure" => Ok(Self::Failure),
             "pending" => Ok(Self::Pending),
             _ => Err(TxTypeParseError(s.to_string())),
+        }
+    }
+}
+
+impl Status {
+    pub fn from_u8(byte: u8) -> Result<Self, TxTypeParseError> {
+        match byte {
+            0 => Ok(Status::Success),
+            1 => Ok(Status::Failure),
+            2 => Ok(Status::Pending),
+            _ => Err(TxTypeParseError(format!("invalid byte value: {}", byte))),
+        }
+    }
+
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            Status::Success => 0,
+            Status::Failure => 1,
+            Status::Pending => 2,
         }
     }
 }
@@ -207,5 +246,61 @@ mod tests {
         assert_eq!(Status::Success.to_string(), "success");
         assert_eq!(Status::Failure.to_string(), "failure");
         assert_eq!(Status::Pending.to_string(), "pending");
+    }
+
+    #[test]
+    fn test_txtype_from_u8_valid() {
+        assert_eq!(TxType::from_u8(0).unwrap(), TxType::Deposit);
+        assert_eq!(TxType::from_u8(1).unwrap(), TxType::Transfer);
+        assert_eq!(TxType::from_u8(2).unwrap(), TxType::Withdrawal);
+    }
+
+    #[test]
+    fn test_txtype_from_u8_invalid() {
+        assert!(TxType::from_u8(3).is_err());
+        assert!(TxType::from_u8(99).is_err());
+        assert!(TxType::from_u8(255).is_err());
+    }
+
+    #[test]
+    fn test_txtype_to_u8() {
+        assert_eq!(TxType::Deposit.to_u8(), 0);
+        assert_eq!(TxType::Transfer.to_u8(), 1);
+        assert_eq!(TxType::Withdrawal.to_u8(), 2);
+    }
+
+    #[test]
+    fn test_status_from_u8_valid() {
+        assert_eq!(Status::from_u8(0).unwrap(), Status::Success);
+        assert_eq!(Status::from_u8(1).unwrap(), Status::Failure);
+        assert_eq!(Status::from_u8(2).unwrap(), Status::Pending);
+    }
+
+    #[test]
+    fn test_status_from_u8_invalid() {
+        assert!(Status::from_u8(3).is_err());
+        assert!(Status::from_u8(99).is_err());
+        assert!(Status::from_u8(255).is_err());
+    }
+
+    #[test]
+    fn test_status_to_u8() {
+        assert_eq!(Status::Success.to_u8(), 0);
+        assert_eq!(Status::Failure.to_u8(), 1);
+        assert_eq!(Status::Pending.to_u8(), 2);
+    }
+
+    #[test]
+    fn test_txtype_u8_roundtrip() {
+        assert_eq!(TxType::from_u8(TxType::Deposit.to_u8()).unwrap(), TxType::Deposit);
+        assert_eq!(TxType::from_u8(TxType::Transfer.to_u8()).unwrap(), TxType::Transfer);
+        assert_eq!(TxType::from_u8(TxType::Withdrawal.to_u8()).unwrap(), TxType::Withdrawal);
+    }
+
+    #[test]
+    fn test_status_u8_roundtrip() {
+        assert_eq!(Status::from_u8(Status::Success.to_u8()).unwrap(), Status::Success);
+        assert_eq!(Status::from_u8(Status::Failure.to_u8()).unwrap(), Status::Failure);
+        assert_eq!(Status::from_u8(Status::Pending.to_u8()).unwrap(), Status::Pending);
     }
 }

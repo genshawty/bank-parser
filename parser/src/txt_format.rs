@@ -1,14 +1,5 @@
-use std::collections::HashMap;
-use std::str::FromStr;
-
 use crate::errors::{ParsingError, TransactionError};
 use crate::{Parser, Status, Transaction, TransactionBuilder, TxType};
-
-fn split_line(line: &str) -> Vec<String> {
-    line.split(",")
-        .map(|s| s.trim_matches('"').to_string())
-        .collect()
-}
 
 impl Parser {
     pub fn read_from_txt<R: std::io::BufRead>(r: &mut R) -> Result<Vec<Transaction>, ParsingError> {
@@ -93,7 +84,19 @@ impl Transaction {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use std::io::Cursor;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_read_from_txt_file() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("data/records_example.txt");
+        let file = fs::File::open(d).expect("file could not be opened");
+        let mut reader = std::io::BufReader::new(file);
+        let txes = Parser::read_from_txt(&mut reader).expect("reading from csv gone wrong");
+        assert!(txes.len() == 1000)
+    }
 
     #[test]
     fn test_try_from_txt_block_basic() {

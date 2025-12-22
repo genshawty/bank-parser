@@ -36,9 +36,32 @@ impl TransactionBuilder {
         Ok(())
     }
 
+    pub fn tx_id_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        let tx_id = u64::from_be_bytes(val.try_into().map_err(|_| {
+            TransactionError::CorruptedField(
+                "tx_id".to_string(),
+                format!("expected 8 bytes, got {}", val.len()),
+            )
+        })?);
+        self.tx_id = Some(tx_id);
+        Ok(())
+    }
+
     pub fn tx_type_str(&mut self, val: String) -> Result<(), TransactionError> {
         let tx_type = TxType::from_str(&val)
             .map_err(|_| TransactionError::CorruptedField("tx_type".to_string(), val.clone()))?;
+        self.tx_type = Some(tx_type);
+        Ok(())
+    }
+    pub fn tx_type_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        if val.len() != 1 {
+            return Err(TransactionError::CorruptedField(
+                "tx_type".to_string(),
+                format!("expected 1 byte, got {}", val.len()),
+            ));
+        }
+        let tx_type = TxType::from_u8(val[0])
+            .map_err(|_| TransactionError::CorruptedField("tx_type".to_string(), format!("{}", val[0])))?;
         self.tx_type = Some(tx_type);
         Ok(())
     }
@@ -50,11 +73,31 @@ impl TransactionBuilder {
         self.from_user_id = Some(from_user_id);
         Ok(())
     }
+    pub fn from_user_id_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        let from_user_id = u64::from_be_bytes(val.try_into().map_err(|_| {
+            TransactionError::CorruptedField(
+                "from_user_id".to_string(),
+                format!("expected 8 bytes, got {}", val.len()),
+            )
+        })?);
+        self.from_user_id = Some(from_user_id);
+        Ok(())
+    }
 
     pub fn to_user_id_str(&mut self, val: String) -> Result<(), TransactionError> {
         let to_user_id = val
             .parse::<u64>()
             .map_err(|_| TransactionError::CorruptedField("to_user_id".to_string(), val.clone()))?;
+        self.to_user_id = Some(to_user_id);
+        Ok(())
+    }
+    pub fn to_user_id_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        let to_user_id = u64::from_be_bytes(val.try_into().map_err(|_| {
+            TransactionError::CorruptedField(
+                "to_user_id".to_string(),
+                format!("expected 8 bytes, got {}", val.len()),
+            )
+        })?);
         self.to_user_id = Some(to_user_id);
         Ok(())
     }
@@ -66,11 +109,33 @@ impl TransactionBuilder {
         self.amount = Some(amount);
         Ok(())
     }
+    pub fn amount_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        let amount = i64::from_be_bytes(val.try_into().map_err(|_| {
+            TransactionError::CorruptedField(
+                "amount".to_string(),
+                format!("expected 8 bytes, got {}", val.len()),
+            )
+        })?);
+        // in other formats amount is >=0
+        // so here i convert in to also be u64
+        self.amount = Some(amount.abs() as u64);
+        Ok(())
+    }
 
     pub fn timestamp_str(&mut self, val: String) -> Result<(), TransactionError> {
         let timestamp = val
             .parse::<u64>()
             .map_err(|_| TransactionError::CorruptedField("timestamp".to_string(), val.clone()))?;
+        self.timestamp = Some(timestamp);
+        Ok(())
+    }
+    pub fn timestamp_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        let timestamp = u64::from_be_bytes(val.try_into().map_err(|_| {
+            TransactionError::CorruptedField(
+                "timestamp".to_string(),
+                format!("expected 8 bytes, got {}", val.len()),
+            )
+        })?);
         self.timestamp = Some(timestamp);
         Ok(())
     }
@@ -81,10 +146,41 @@ impl TransactionBuilder {
         self.status = Some(status);
         Ok(())
     }
+    pub fn status_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        if val.len() != 1 {
+            return Err(TransactionError::CorruptedField(
+                "status".to_string(),
+                format!("expected 1 byte, got {}", val.len()),
+            ));
+        }
+        let status = Status::from_u8(val[0])
+            .map_err(|_| TransactionError::CorruptedField("status".to_string(), format!("{}", val[0])))?;
+        self.status = Some(status);
+        Ok(())
+    }
 
     pub fn description_str(&mut self, val: String) -> Result<(), TransactionError> {
         let description = val.trim_matches('"').to_string();
         self.description = Some(description);
+        Ok(())
+    }
+    pub fn description_byte(&mut self, val: &[u8]) -> Result<(), TransactionError> {
+        let desc_len = u32::from_be_bytes(val[..4].try_into().map_err(|_| {
+            TransactionError::CorruptedField(
+                "desc_len".to_string(),
+                format!("expected 4 bytes, got {}", val.len()),
+            )
+        })?);
+        if desc_len == 0 {
+            return self.description_str("".to_string());
+        }
+        let description = str::from_utf8(&val[4..]).map_err(|_| {
+            TransactionError::CorruptedField(
+                "desc_len".to_string(),
+                format!("expected 4 bytes, got {}", val.len()),
+            )
+        })?;
+        self.description = Some(description.to_string());
         Ok(())
     }
 

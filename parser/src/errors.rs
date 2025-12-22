@@ -1,4 +1,4 @@
-use std::{fmt, io};
+use std::{array::TryFromSliceError, fmt, io};
 
 // todo: display and error
 #[derive(Debug)]
@@ -19,6 +19,7 @@ pub enum ParsingError {
     IncorrectHeader,
     TransactionError(TransactionError),
     Io(io::Error),
+    InvalidDataFormat,
 }
 
 impl From<io::Error> for ParsingError {
@@ -30,5 +31,11 @@ impl From<io::Error> for ParsingError {
 impl From<TransactionError> for ParsingError {
     fn from(e: TransactionError) -> Self {
         ParsingError::TransactionError(e)
+    }
+}
+
+impl From<TryFromSliceError> for ParsingError {
+    fn from(_: TryFromSliceError) -> Self {
+        ParsingError::InvalidDataFormat
     }
 }
