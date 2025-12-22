@@ -109,7 +109,7 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Transaction {
     tx_id: u64,
     tx_type: TxType,
