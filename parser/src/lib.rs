@@ -3,7 +3,7 @@ pub mod builder;
 pub mod csv_format;
 pub mod errors;
 pub mod txt_format;
-use builder::TransactionBuilder;
+pub use builder::TransactionBuilder;
 use std::fmt;
 use std::str::FromStr;
 
@@ -173,14 +173,14 @@ impl fmt::Display for Status {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
-    tx_id: u64,
-    tx_type: TxType,
-    from_user_id: u64,
-    to_user_id: u64,
-    amount: u64,
-    timestamp: u64,
-    status: Status,
-    description: String,
+    pub tx_id: u64,
+    pub tx_type: TxType,
+    pub from_user_id: u64,
+    pub to_user_id: u64,
+    pub amount: u64,
+    pub timestamp: u64,
+    pub status: Status,
+    pub description: String,
 }
 
 impl fmt::Display for Transaction {
