@@ -59,7 +59,7 @@ impl Transaction {
         builder.build()
     }
 
-    fn to_txt_block(&self) -> String {
+    pub fn to_txt_block(&self) -> String {
         format!(
             "TX_ID: {}\n\
             TX_TYPE: {}\n\

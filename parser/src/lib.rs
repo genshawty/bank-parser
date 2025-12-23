@@ -9,14 +9,14 @@ use std::str::FromStr;
 
 use crate::errors::TxTypeParseError;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Status {
     Success,
     Failure,
     Pending,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TxType {
     Deposit,
     Transfer,
@@ -109,7 +109,7 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
     tx_id: u64,
     tx_type: TxType,
@@ -120,6 +120,13 @@ pub struct Transaction {
     status: Status,
     description: String,
 }
+
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_txt_block())
+    }
+}
+
 pub struct Parser {}
 
 #[cfg(test)]
