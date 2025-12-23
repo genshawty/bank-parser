@@ -124,8 +124,9 @@ impl TransactionBuilder {
                 format!("expected 1 byte, got {}", val.len()),
             ));
         }
-        let tx_type = TxType::from_u8(val[0])
-            .map_err(|_| TransactionError::CorruptedField("tx_type".to_string(), format!("{}", val[0])))?;
+        let tx_type = TxType::from_u8(val[0]).map_err(|_| {
+            TransactionError::CorruptedField("tx_type".to_string(), format!("{}", val[0]))
+        })?;
         self.tx_type = Some(tx_type);
         Ok(())
     }
@@ -343,8 +344,9 @@ impl TransactionBuilder {
                 format!("expected 1 byte, got {}", val.len()),
             ));
         }
-        let status = Status::from_u8(val[0])
-            .map_err(|_| TransactionError::CorruptedField("status".to_string(), format!("{}", val[0])))?;
+        let status = Status::from_u8(val[0]).map_err(|_| {
+            TransactionError::CorruptedField("status".to_string(), format!("{}", val[0]))
+        })?;
         self.status = Some(status);
         Ok(())
     }
