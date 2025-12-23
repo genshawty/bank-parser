@@ -8,7 +8,7 @@ pub struct TransactionBuilder {
     tx_type: Option<TxType>,
     from_user_id: Option<u64>,
     to_user_id: Option<u64>,
-    amount: Option<u64>,
+    amount: Option<i64>,
     timestamp: Option<u64>,
     status: Option<Status>,
     description: Option<String>,
@@ -231,7 +231,7 @@ impl TransactionBuilder {
     /// * `Err(TransactionError)` - If the string cannot be parsed as a valid u64
     pub fn amount_str(&mut self, val: String) -> Result<(), TransactionError> {
         let amount = val
-            .parse::<u64>()
+            .parse::<i64>()
             .map_err(|_| TransactionError::CorruptedField("amount".to_string(), val.clone()))?;
         self.amount = Some(amount);
         Ok(())
@@ -259,7 +259,7 @@ impl TransactionBuilder {
         })?);
         // in other formats amount is >=0
         // so here i convert in to also be u64
-        self.amount = Some(amount.abs() as u64);
+        self.amount = Some(amount);
         Ok(())
     }
 

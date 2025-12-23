@@ -177,7 +177,7 @@ pub struct Transaction {
     pub tx_type: TxType,
     pub from_user_id: u64,
     pub to_user_id: u64,
-    pub amount: u64,
+    pub amount: i64,
     pub timestamp: u64,
     pub status: Status,
     pub description: String,

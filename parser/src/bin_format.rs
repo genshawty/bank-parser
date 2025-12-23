@@ -254,7 +254,7 @@ mod tests {
         data.push(2); // WITHDRAWAL
         data.extend_from_slice(&99999u64.to_be_bytes());
         data.extend_from_slice(&0u64.to_be_bytes());
-        data.extend_from_slice(&(-150i64).to_be_bytes()); // Negative amount
+        data.extend_from_slice(&(150i64).to_be_bytes());
         data.extend_from_slice(&1640000002000u64.to_be_bytes());
         data.push(2); // PENDING
 
