@@ -37,6 +37,24 @@ impl FromStr for TxType {
 }
 
 impl TxType {
+    /// Converts a byte value to a transaction type.
+    ///
+    /// # Arguments
+    /// * `byte` - The byte value to convert (0 = Deposit, 1 = Transfer, 2 = Withdrawal)
+    ///
+    /// # Returns
+    /// * `Ok(TxType)` - The corresponding transaction type
+    /// * `Err(TxTypeParseError)` - If the byte value is invalid (> 2)
+    ///
+    /// # Examples
+    /// ```
+    /// use parser::TxType;
+    ///
+    /// assert_eq!(TxType::from_u8(0).unwrap(), TxType::Deposit);
+    /// assert_eq!(TxType::from_u8(1).unwrap(), TxType::Transfer);
+    /// assert_eq!(TxType::from_u8(2).unwrap(), TxType::Withdrawal);
+    /// assert!(TxType::from_u8(3).is_err());
+    /// ```
     pub fn from_u8(byte: u8) -> Result<Self, TxTypeParseError> {
         match byte {
             0 => Ok(TxType::Deposit),
@@ -46,6 +64,19 @@ impl TxType {
         }
     }
 
+    /// Converts a transaction type to its byte representation.
+    ///
+    /// # Returns
+    /// The byte value (0 = Deposit, 1 = Transfer, 2 = Withdrawal)
+    ///
+    /// # Examples
+    /// ```
+    /// use parser::TxType;
+    ///
+    /// assert_eq!(TxType::Deposit.to_u8(), 0);
+    /// assert_eq!(TxType::Transfer.to_u8(), 1);
+    /// assert_eq!(TxType::Withdrawal.to_u8(), 2);
+    /// ```
     pub fn to_u8(&self) -> u8 {
         match self {
             TxType::Deposit => 0,
@@ -80,6 +111,24 @@ impl FromStr for Status {
 }
 
 impl Status {
+    /// Converts a byte value to a transaction status.
+    ///
+    /// # Arguments
+    /// * `byte` - The byte value to convert (0 = Success, 1 = Failure, 2 = Pending)
+    ///
+    /// # Returns
+    /// * `Ok(Status)` - The corresponding status
+    /// * `Err(TxTypeParseError)` - If the byte value is invalid (> 2)
+    ///
+    /// # Examples
+    /// ```
+    /// use parser::Status;
+    ///
+    /// assert_eq!(Status::from_u8(0).unwrap(), Status::Success);
+    /// assert_eq!(Status::from_u8(1).unwrap(), Status::Failure);
+    /// assert_eq!(Status::from_u8(2).unwrap(), Status::Pending);
+    /// assert!(Status::from_u8(3).is_err());
+    /// ```
     pub fn from_u8(byte: u8) -> Result<Self, TxTypeParseError> {
         match byte {
             0 => Ok(Status::Success),
@@ -89,6 +138,19 @@ impl Status {
         }
     }
 
+    /// Converts a status to its byte representation.
+    ///
+    /// # Returns
+    /// The byte value (0 = Success, 1 = Failure, 2 = Pending)
+    ///
+    /// # Examples
+    /// ```
+    /// use parser::Status;
+    ///
+    /// assert_eq!(Status::Success.to_u8(), 0);
+    /// assert_eq!(Status::Failure.to_u8(), 1);
+    /// assert_eq!(Status::Pending.to_u8(), 2);
+    /// ```
     pub fn to_u8(&self) -> u8 {
         match self {
             Status::Success => 0,

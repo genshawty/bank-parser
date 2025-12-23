@@ -13,6 +13,32 @@ fn split_line(line: &str) -> Vec<String> {
 }
 
 impl Parser {
+    /// Reads and parses transaction records from a CSV format.
+    ///
+    /// This function reads CSV data with the expected header format:
+    /// `TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION`
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - A mutable reference to any type implementing `BufRead` (e.g., `BufReader`, `Cursor`)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<Transaction>)` - A vector of successfully parsed transactions
+    /// * `Err(ParsingError)` - An error if the header is incorrect, the format is invalid, or any transaction fails to parse
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::Parser;
+    /// use std::fs::File;
+    /// use std::io::BufReader;
+    ///
+    /// let file = File::open("transactions.csv").expect("Unable to open file");
+    /// let mut reader = BufReader::new(file);
+    /// let transactions = Parser::read_from_csv(&mut reader).expect("Failed to parse CSV");
+    /// println!("Read {} transactions", transactions.len());
+    /// ```
     pub fn read_from_csv<R: std::io::BufRead>(r: &mut R) -> Result<Vec<Transaction>, ParsingError> {
         let mut txes = Vec::new();
         let mut buf = String::new();
@@ -34,6 +60,43 @@ impl Parser {
         Ok(txes)
     }
 
+    /// Writes a collection of transactions to CSV format.
+    ///
+    /// This function writes transactions with the CSV header:
+    /// `TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION`
+    /// Each transaction is written on a separate line with the description field enclosed in quotes.
+    ///
+    /// # Arguments
+    ///
+    /// * `w` - A mutable reference to any type implementing `Write` (e.g., `File`, `Vec<u8>`, `Cursor`)
+    /// * `txes` - A vector of `Transaction` objects to write
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If all transactions are successfully written
+    /// * `Err(std::io::Error)` - If any write operation fails
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::{Parser, Transaction, TxType, Status};
+    /// use std::fs::File;
+    ///
+    /// let transactions = vec![
+    ///     Transaction {
+    ///         tx_id: 1,
+    ///         tx_type: TxType::Deposit,
+    ///         from_user_id: 0,
+    ///         to_user_id: 100,
+    ///         amount: 5000,
+    ///         timestamp: 1234567890,
+    ///         status: Status::Success,
+    ///         description: "Test deposit".to_string(),
+    ///     }
+    /// ];
+    /// let mut file = File::create("output.csv").expect("Unable to create file");
+    /// Parser::write_to_csv(&mut file, transactions).expect("Failed to write CSV");
+    /// ```
     pub fn write_to_csv<W: std::io::Write>(
         w: &mut W,
         txes: Vec<Transaction>,

@@ -85,7 +85,6 @@ fn first_mismatch_transaction(
 
 fn main() {
     let args = Cli::parse();
-    let args_clone = args.clone();
     validate_args(args.clone()).expect("invalid arguments");
 
     let transactions_left = match get_transactions(args.file1, args.format1) {

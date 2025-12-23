@@ -2,6 +2,33 @@ use crate::errors::{ParsingError, TransactionError};
 use crate::{Parser, Status, Transaction, TransactionBuilder, TxType};
 
 impl Parser {
+    /// Reads and parses transaction records from a text format.
+    ///
+    /// This function reads text data where each transaction is represented as a block of key-value pairs
+    /// separated by double newlines. Each line within a block follows the format `KEY: VALUE`.
+    /// Lines starting with `#` are treated as comments and ignored.
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - A mutable reference to any type implementing `BufRead` (e.g., `BufReader`, `Cursor`)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<Transaction>)` - A vector of successfully parsed transactions
+    /// * `Err(ParsingError)` - An error if any transaction block is malformed or cannot be parsed
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::Parser;
+    /// use std::fs::File;
+    /// use std::io::BufReader;
+    ///
+    /// let file = File::open("transactions.txt").expect("Unable to open file");
+    /// let mut reader = BufReader::new(file);
+    /// let transactions = Parser::read_from_txt(&mut reader).expect("Failed to parse TXT");
+    /// println!("Read {} transactions", transactions.len());
+    /// ```
     pub fn read_from_txt<R: std::io::BufRead>(r: &mut R) -> Result<Vec<Transaction>, ParsingError> {
         let mut txes = Vec::new();
         let mut buf = String::new();
@@ -17,6 +44,43 @@ impl Parser {
         Ok(txes)
     }
 
+    /// Writes a collection of transactions to text format.
+    ///
+    /// This function writes transactions as text blocks, where each transaction is preceded by a
+    /// comment line (`# Record N (TYPE)`) and formatted as key-value pairs. Each transaction block
+    /// is separated by a double newline.
+    ///
+    /// # Arguments
+    ///
+    /// * `w` - A mutable reference to any type implementing `Write` (e.g., `File`, `Vec<u8>`, `Cursor`)
+    /// * `txes` - A vector of `Transaction` objects to write
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If all transactions are successfully written
+    /// * `Err(std::io::Error)` - If any write operation fails
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::{Parser, Transaction, TxType, Status};
+    /// use std::fs::File;
+    ///
+    /// let transactions = vec![
+    ///     Transaction {
+    ///         tx_id: 1,
+    ///         tx_type: TxType::Deposit,
+    ///         from_user_id: 0,
+    ///         to_user_id: 100,
+    ///         amount: 5000,
+    ///         timestamp: 1234567890,
+    ///         status: Status::Success,
+    ///         description: "Test deposit".to_string(),
+    ///     }
+    /// ];
+    /// let mut file = File::create("output.txt").expect("Unable to create file");
+    /// Parser::write_to_txt(&mut file, transactions).expect("Failed to write TXT");
+    /// ```
     pub fn write_to_txt<W: std::io::Write>(
         w: &mut W,
         txes: Vec<Transaction>,
@@ -59,6 +123,34 @@ impl Transaction {
         builder.build()
     }
 
+    /// Converts a transaction to its text block representation.
+    ///
+    /// This function formats a transaction as a multi-line string with key-value pairs,
+    /// suitable for the text format. Each field is on a separate line following the pattern `KEY: VALUE`.
+    /// The description field is enclosed in quotes.
+    ///
+    /// # Returns
+    ///
+    /// A `String` containing the formatted transaction block
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::{Transaction, TxType, Status};
+    ///
+    /// let tx = Transaction {
+    ///     tx_id: 1,
+    ///     tx_type: TxType::Deposit,
+    ///     from_user_id: 0,
+    ///     to_user_id: 100,
+    ///     amount: 5000,
+    ///     timestamp: 1234567890,
+    ///     status: Status::Success,
+    ///     description: "Test deposit".to_string(),
+    /// };
+    /// let text_block = tx.to_txt_block();
+    /// println!("{}", text_block);
+    /// ```
     pub fn to_txt_block(&self) -> String {
         format!(
             "TX_ID: {}\n\

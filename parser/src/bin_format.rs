@@ -2,6 +2,34 @@ use crate::errors::{ParsingError, TransactionError};
 use crate::{Parser, Transaction, TransactionBuilder, TxType};
 
 impl Parser {
+    /// Reads and parses transaction records from a binary format.
+    ///
+    /// This function reads binary data in the YPBN format. Each record consists of:
+    /// - 4-byte magic header: "YPBN"
+    /// - 4-byte record size (big-endian u32)
+    /// - Variable-length record data containing transaction fields
+    ///
+    /// # Arguments
+    ///
+    /// * `r` - A mutable reference to any type implementing `BufRead` (e.g., `BufReader`, `Cursor`)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<Transaction>)` - A vector of successfully parsed transactions
+    /// * `Err(ParsingError)` - An error if the magic header is invalid, data is corrupted, or any transaction fails to parse
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::Parser;
+    /// use std::fs::File;
+    /// use std::io::BufReader;
+    ///
+    /// let file = File::open("transactions.bin").expect("Unable to open file");
+    /// let mut reader = BufReader::new(file);
+    /// let transactions = Parser::read_from_bin(&mut reader).expect("Failed to parse BIN");
+    /// println!("Read {} transactions", transactions.len());
+    /// ```
     pub fn read_from_bin<R: std::io::BufRead>(r: &mut R) -> Result<Vec<Transaction>, ParsingError> {
         let mut txes = Vec::new();
         let mut header = [0; 8];
@@ -18,6 +46,44 @@ impl Parser {
         Ok(txes)
     }
 
+    /// Writes a collection of transactions to binary format.
+    ///
+    /// This function writes transactions in the YPBN binary format. Each record is written with:
+    /// - 4-byte magic header: "YPBN"
+    /// - 4-byte record size (big-endian u32)
+    /// - Variable-length record data with all transaction fields in binary encoding
+    ///
+    /// # Arguments
+    ///
+    /// * `w` - A mutable reference to any type implementing `Write` (e.g., `File`, `Vec<u8>`, `Cursor`)
+    /// * `txes` - A vector of `Transaction` objects to write
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If all transactions are successfully written
+    /// * `Err(std::io::Error)` - If any write operation fails
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::{Parser, Transaction, TxType, Status};
+    /// use std::fs::File;
+    ///
+    /// let transactions = vec![
+    ///     Transaction {
+    ///         tx_id: 1,
+    ///         tx_type: TxType::Deposit,
+    ///         from_user_id: 0,
+    ///         to_user_id: 100,
+    ///         amount: 5000,
+    ///         timestamp: 1234567890,
+    ///         status: Status::Success,
+    ///         description: "Test deposit".to_string(),
+    ///     }
+    /// ];
+    /// let mut file = File::create("output.bin").expect("Unable to create file");
+    /// Parser::write_to_bin(&mut file, transactions).expect("Failed to write BIN");
+    /// ```
     pub fn write_to_bin<W: std::io::Write>(
         w: &mut W,
         txes: Vec<Transaction>,
@@ -35,6 +101,39 @@ impl Parser {
 }
 
 impl Transaction {
+    /// Attempts to create a transaction from binary data.
+    ///
+    /// This function parses a byte slice containing a transaction record in binary format.
+    /// The binary format uses big-endian encoding for all multi-byte fields.
+    ///
+    /// # Binary Format Layout
+    /// - TX_ID: 8 bytes (u64)
+    /// - TX_TYPE: 1 byte (u8)
+    /// - FROM_USER_ID: 8 bytes (u64)
+    /// - TO_USER_ID: 8 bytes (u64)
+    /// - AMOUNT: 8 bytes (i64, converted to absolute value)
+    /// - TIMESTAMP: 8 bytes (u64)
+    /// - STATUS: 1 byte (u8)
+    /// - DESCRIPTION_LENGTH: 4 bytes (u32)
+    /// - DESCRIPTION: variable length UTF-8 string
+    ///
+    /// # Arguments
+    ///
+    /// * `row` - A reference to a vector of bytes containing the transaction data
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Transaction)` - If the data is successfully parsed
+    /// * `Err(TransactionError)` - If the data is corrupted or invalid
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use parser::Transaction;
+    ///
+    /// let binary_data: Vec<u8> = vec![/* binary transaction data */];
+    /// let transaction = Transaction::try_from_bin(&binary_data).expect("Failed to parse");
+    /// ```
     pub fn try_from_bin(row: &Vec<u8>) -> Result<Self, TransactionError> {
         let mut builder = TransactionBuilder::new();
         builder.tx_id_byte(&row[..8])?;
