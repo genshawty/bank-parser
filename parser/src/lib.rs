@@ -109,7 +109,7 @@ impl fmt::Display for Status {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Transaction {
     tx_id: u64,
     tx_type: TxType,
@@ -292,15 +292,33 @@ mod tests {
 
     #[test]
     fn test_txtype_u8_roundtrip() {
-        assert_eq!(TxType::from_u8(TxType::Deposit.to_u8()).unwrap(), TxType::Deposit);
-        assert_eq!(TxType::from_u8(TxType::Transfer.to_u8()).unwrap(), TxType::Transfer);
-        assert_eq!(TxType::from_u8(TxType::Withdrawal.to_u8()).unwrap(), TxType::Withdrawal);
+        assert_eq!(
+            TxType::from_u8(TxType::Deposit.to_u8()).unwrap(),
+            TxType::Deposit
+        );
+        assert_eq!(
+            TxType::from_u8(TxType::Transfer.to_u8()).unwrap(),
+            TxType::Transfer
+        );
+        assert_eq!(
+            TxType::from_u8(TxType::Withdrawal.to_u8()).unwrap(),
+            TxType::Withdrawal
+        );
     }
 
     #[test]
     fn test_status_u8_roundtrip() {
-        assert_eq!(Status::from_u8(Status::Success.to_u8()).unwrap(), Status::Success);
-        assert_eq!(Status::from_u8(Status::Failure.to_u8()).unwrap(), Status::Failure);
-        assert_eq!(Status::from_u8(Status::Pending.to_u8()).unwrap(), Status::Pending);
+        assert_eq!(
+            Status::from_u8(Status::Success.to_u8()).unwrap(),
+            Status::Success
+        );
+        assert_eq!(
+            Status::from_u8(Status::Failure.to_u8()).unwrap(),
+            Status::Failure
+        );
+        assert_eq!(
+            Status::from_u8(Status::Pending.to_u8()).unwrap(),
+            Status::Pending
+        );
     }
 }
