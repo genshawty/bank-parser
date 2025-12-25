@@ -42,18 +42,23 @@ impl Parser {
     pub fn read_from_csv<R: std::io::BufRead>(r: &mut R) -> Result<Vec<Transaction>, ParsingError> {
         let mut txes = Vec::new();
         let mut buf = String::new();
-        r.read_to_string(&mut buf)?;
-        let rows: Vec<&str> = buf.split("\n").collect();
-        if rows[0] != CSV_HEADER {
-            eprintln!("{:?}", rows[0]);
+        // r.read_to_string(&mut buf)?;
+        r.read_line(&mut buf)?;
+        // let rows: Vec<&str> = buf.split("\n").collect();
+        if buf.trim() != CSV_HEADER {
+            eprintln!("{:?}", buf);
             return Err(ParsingError::IncorrectHeader);
         }
-        for row in &rows[1..] {
-            if row.is_empty() {
-                continue;
-            };
-            let cells = split_line(row);
-            // println!("{:?}", cells);
+        loop {
+            buf.clear();
+            let n = r.read_line(&mut buf)?;
+            if n == 0 {
+                break; // EOF - no more data to read
+            }
+            if buf.trim().is_empty() {
+                continue; // Empty line - skip it
+            }
+            let cells = split_line(&buf.trim());
             let tx = Transaction::try_from_csv_row(cells)?;
             txes.push(tx);
         }
