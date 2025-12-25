@@ -32,15 +32,28 @@ impl Parser {
     pub fn read_from_txt<R: std::io::BufRead>(r: &mut R) -> Result<Vec<Transaction>, ParsingError> {
         let mut txes = Vec::new();
         let mut buf = String::new();
-        r.read_to_string(&mut buf)?;
-        let blocks = buf.split("\n\n");
-        for block in blocks {
-            if block.is_empty() {
-                continue;
-            };
-            let tx = Transaction::try_from_txt_block(block.to_string())?;
-            txes.push(tx);
+        let mut block = String::new();
+
+        loop {
+            buf.clear();
+            let n = r.read_line(&mut buf)?;
+            if n == 0 {
+                if block.len() > 2 {
+                    // because minimal block len is much more than 2, but in case our format is incorrect checking just 2 bytes just in case
+                    let tx = Transaction::try_from_txt_block(block.to_string())?;
+                    txes.push(tx);
+                }
+                break;
+            }
+            if buf == "\n" {
+                let tx = Transaction::try_from_txt_block(block.to_string())?;
+                txes.push(tx);
+                block.clear();
+            } else {
+                block.push_str(&buf.clone());
+            }
         }
+
         Ok(txes)
     }
 
