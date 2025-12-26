@@ -49,6 +49,7 @@ fn main() {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+    use tempdir::TempDir;
 
     #[test]
     fn test_validate_args_file_not_exists() {
@@ -69,8 +70,9 @@ mod tests {
     #[test]
     fn test_validate_args_extension_mismatch() {
         // Create a temporary file with .csv extension
-        let temp_dir = std::env::temp_dir();
-        let temp_file = temp_dir.join("test_file.csv");
+
+        let temp_dir = TempDir::new("converter_test").expect("failed to create temp dir");
+        let temp_file = temp_dir.path().join("test_invalid.csv");
         std::fs::write(&temp_file, "test").unwrap();
 
         let args = Cli {
@@ -95,8 +97,8 @@ mod tests {
 
     #[test]
     fn test_validate_args_valid_csv() {
-        let temp_dir = std::env::temp_dir();
-        let temp_file = temp_dir.join("test_valid.csv");
+        let temp_dir = TempDir::new("converter_test").expect("failed to create temp dir");
+        let temp_file = temp_dir.path().join("test_valid.csv");
         std::fs::write(&temp_file, "test").unwrap();
 
         let args = Cli {
@@ -115,8 +117,8 @@ mod tests {
 
     #[test]
     fn test_validate_args_valid_txt() {
-        let temp_dir = std::env::temp_dir();
-        let temp_file = temp_dir.join("test_valid.txt");
+        let temp_dir = TempDir::new("converter_test").expect("failed to create temp dir");
+        let temp_file = temp_dir.path().join("test_valid.txt");
         std::fs::write(&temp_file, "test").unwrap();
 
         let args = Cli {
@@ -135,8 +137,8 @@ mod tests {
 
     #[test]
     fn test_validate_args_valid_bin() {
-        let temp_dir = std::env::temp_dir();
-        let temp_file = temp_dir.join("test_valid.bin");
+        let temp_dir = TempDir::new("converter_test").expect("failed to create temp dir");
+        let temp_file = temp_dir.path().join("test_valid.bin");
         std::fs::write(&temp_file, "test").unwrap();
 
         let args = Cli {
