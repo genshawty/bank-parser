@@ -158,7 +158,6 @@ mod tests {
     use super::*;
     use std::io::Cursor;
     use std::path::PathBuf;
-    use std::str::FromStr;
 
     use crate::{Status, TxType};
 

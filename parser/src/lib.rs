@@ -22,19 +22,35 @@
 //!
 //! # Examples
 //!
-//! ```
-//! use parser::{TransactionBuilder, TxType, Status};
+//! ## Building a Transaction
 //!
-//! let transaction = TransactionBuilder::new()
-//!     .tx_id(1)
-//!     .tx_type(TxType::Deposit)
-//!     .from_user_id(100)
-//!     .to_user_id(200)
-//!     .amount(1000)
-//!     .timestamp(1234567890)
-//!     .status(Status::Success)
-//!     .description("Payment".to_string())
-//!     .build();
+//! ```
+//! use parser::TransactionBuilder;
+//!
+//! let mut builder = TransactionBuilder::new();
+//! builder.tx_id_str("1".to_string()).unwrap();
+//! builder.tx_type_str("deposit".to_string()).unwrap();
+//! builder.from_user_id_str("100".to_string()).unwrap();
+//! builder.to_user_id_str("200".to_string()).unwrap();
+//! builder.amount_str("1000".to_string()).unwrap();
+//! builder.timestamp_str("1234567890".to_string()).unwrap();
+//! builder.status_str("success".to_string()).unwrap();
+//! builder.description_str("Payment".to_string()).unwrap();
+//!
+//! let transaction = builder.build().unwrap();
+//! ```
+//!
+//! ## Parsing Transactions from CSV
+//!
+//! ```no_run
+//! use parser::Parser;
+//! use std::fs::File;
+//! use std::io::BufReader;
+//!
+//! let file = File::open("transactions.csv").expect("Unable to open file");
+//! let mut reader = BufReader::new(file);
+//! let transactions = Parser::read_from_csv(&mut reader).expect("Failed to parse CSV");
+//! println!("Loaded {} transactions", transactions.len());
 //! ```
 
 pub mod bin_format;
