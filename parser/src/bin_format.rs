@@ -5,6 +5,8 @@
 use crate::errors::{ParsingError, TransactionError};
 use crate::{Parser, Transaction, TransactionBuilder};
 
+const BIN_MAGIC: &[u8] = b"YPBN";
+
 impl Parser {
     /// Reads and parses transaction records from a binary format.
     ///
@@ -38,7 +40,7 @@ impl Parser {
         let mut txes = Vec::new();
         let mut header = [0; 8];
         while let Ok(_) = r.read_exact(&mut header) {
-            if header[..4] != *b"YPBN" {
+            if header[..4] != *BIN_MAGIC {
                 return Err(ParsingError::InvalidDataFormat);
             }
             let data_size = u32::from_be_bytes(header[4..8].try_into()?);
@@ -95,7 +97,7 @@ impl Parser {
         for tx in txes.iter() {
             let data = tx.to_bin();
             // Write header: YPBN magic + record size
-            w.write_all(b"YPBN")?;
+            w.write_all(BIN_MAGIC)?;
             w.write_all(&(data.len() as u32).to_be_bytes())?;
             // Write body
             w.write_all(&data)?;
@@ -346,7 +348,7 @@ mod tests {
         Parser::write_to_bin(&mut buffer, vec![tx]).unwrap();
 
         // Verify the binary format
-        assert_eq!(&buffer[0..4], b"YPBN"); // Magic
+        assert_eq!(&buffer[0..4], BIN_MAGIC); // Magic
         let size = u32::from_be_bytes([buffer[4], buffer[5], buffer[6], buffer[7]]);
         assert!(size > 0);
 
