@@ -376,6 +376,45 @@ mod tests {
     }
 
     #[test]
+    fn test_read_from_bin_empty_input() {
+        use std::io::Cursor;
+
+        // Empty input (0 bytes)
+        let empty_data: Vec<u8> = vec![];
+        let mut cursor = Cursor::new(empty_data);
+        let result = Parser::read_from_bin(&mut cursor);
+
+        // Should return error because we have at least attempted to read and got UnexpectedEof
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_read_from_bin_partial_header() {
+        use std::io::Cursor;
+
+        // Only 3 bytes - less than magic header (4 bytes)
+        let partial_data: Vec<u8> = vec![b'Y', b'P', b'B'];
+        let mut cursor = Cursor::new(partial_data);
+        let result = Parser::read_from_bin(&mut cursor);
+
+        // Should return error due to UnexpectedEof
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_read_from_bin_only_magic() {
+        use std::io::Cursor;
+
+        // Only magic bytes (4 bytes), but missing size field
+        let only_magic: Vec<u8> = vec![b'Y', b'P', b'B', b'N'];
+        let mut cursor = Cursor::new(only_magic);
+        let result = Parser::read_from_bin(&mut cursor);
+
+        // Should return error - can't read full 8-byte header
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn test_write_then_read_bin_roundtrip() {
         use std::io::Cursor;
 
