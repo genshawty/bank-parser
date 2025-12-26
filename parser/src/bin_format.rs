@@ -155,7 +155,9 @@ impl Transaction {
     }
 
     fn to_bin(&self) -> Vec<u8> {
-        let mut data = Vec::new();
+        // capacity is 8 + 1 + 8 + 8 + 8 + 8 + 1 + 4 + desc_len
+        let cap = 46 + self.description.len();
+        let mut data = Vec::with_capacity(cap);
         data.extend_from_slice(&self.tx_id.to_be_bytes());
         data.push(self.tx_type.to_u8());
         data.extend_from_slice(&self.from_user_id.to_be_bytes());
