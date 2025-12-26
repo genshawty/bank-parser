@@ -1,6 +1,5 @@
 use clap::Parser;
-use parser::{Parser as ParserTrait, Transaction};
-use std::io::{BufWriter, Write};
+use parser::Transaction;
 use std::path::PathBuf;
 use ypbank_converter::errors::ComparerArgsError;
 use ypbank_converter::{Format, get_transactions};

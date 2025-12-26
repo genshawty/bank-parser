@@ -165,7 +165,6 @@ mod tests {
     fn test_read_from_csv() {
         let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         d.push("data/records_example.csv");
-        // println!("{}", d.display());
         let file = fs::File::open(d).expect("file could not be opened");
         let mut reader = io::BufReader::new(file);
         let txes = Parser::read_from_csv(&mut reader).expect("reading from csv gone wrong");

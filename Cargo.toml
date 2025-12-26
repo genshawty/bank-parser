@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+    "converter",
+    "parser",
+]
+
+[workspace.package]
+rust-version = "1.91"
+edition = "2024"
+
+[workspace.dependencies]
+clap = { version = "4.5", features = ["derive"] }
