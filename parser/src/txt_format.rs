@@ -1,5 +1,10 @@
+//! Text format parsing and writing for transactions.
+//!
+//! This module provides functionality to read and write transaction data as text blocks
+//! with key-value pairs separated by newlines.
+
 use crate::errors::{ParsingError, TransactionError};
-use crate::{Parser, Status, Transaction, TransactionBuilder, TxType};
+use crate::{Parser, Transaction, TransactionBuilder};
 
 impl Parser {
     /// Reads and parses transaction records from a text format.
@@ -192,6 +197,8 @@ mod tests {
     use std::fs;
     use std::io::Cursor;
     use std::path::PathBuf;
+
+    use crate::{Status, TxType};
 
     #[test]
     fn test_read_from_txt_file() {

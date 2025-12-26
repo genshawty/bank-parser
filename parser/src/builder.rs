@@ -1,7 +1,17 @@
+//! Transaction builder for constructing transactions with validation.
+//!
+//! This module provides the `TransactionBuilder` type for building transaction objects
+//! from various data sources (strings, binary data) with field validation.
+
 use crate::errors::TransactionError;
 use crate::{Status, Transaction, TxType};
 use std::str::FromStr;
 
+/// Builder for constructing `Transaction` objects with validation.
+///
+/// This builder validates and converts transaction data from various formats
+/// (strings, binary) before creating a `Transaction`. All fields must be set
+/// before calling `build()`.
 #[derive(Debug)]
 pub struct TransactionBuilder {
     tx_id: Option<u64>,

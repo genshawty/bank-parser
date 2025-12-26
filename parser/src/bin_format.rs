@@ -1,5 +1,9 @@
+//! Binary format parsing and serialization for transactions.
+//!
+//! This module provides functionality to read and write transaction data in binary format (YPBN).
+
 use crate::errors::{ParsingError, TransactionError};
-use crate::{Parser, Transaction, TransactionBuilder, TxType};
+use crate::{Parser, Transaction, TransactionBuilder};
 
 impl Parser {
     /// Reads and parses transaction records from a binary format.
@@ -292,37 +296,36 @@ mod tests {
         assert_eq!(tx.description, "");
     }
 
-    // Test commented out because it depends on data/records_example.bin which is not published to GitHub
-    // #[test]
-    // fn test_read_from_bin_file() {
-    //     let file = std::fs::File::open("data/records_example.bin").unwrap();
-    //     let mut reader = BufReader::new(file);
-    //
-    //     let txes = Parser::read_from_bin(&mut reader).unwrap();
-    //
-    //     // Check that we read multiple transactions
-    //     assert!(txes.len() > 0, "Should read at least one transaction");
-    //
-    //     // Print first transaction for debugging
-    //     let first = &txes[0];
-    //     println!("First transaction:");
-    //     println!("  tx_id: {}", first.tx_id);
-    //     println!("  tx_type: {:?}", first.tx_type);
-    //     println!("  from_user_id: {}", first.from_user_id);
-    //     println!("  to_user_id: {}", first.to_user_id);
-    //     println!("  amount: {}", first.amount);
-    //     println!("  timestamp: {}", first.timestamp);
-    //     println!("  status: {:?}", first.status);
-    //     println!("  description: {}", first.description);
-    //     println!(
-    //         "Successfully read {} transactions from binary file",
-    //         txes.len()
-    //     );
+    #[test]
+    fn test_read_from_bin_file() {
+        let file = std::fs::File::open("data/records_example.bin").unwrap();
+        let mut reader = BufReader::new(file);
 
-    //     // Basic validations
-    //     assert!(first.tx_id > 0);
-    //     assert!(first.timestamp > 0);
-    // }
+        let txes = Parser::read_from_bin(&mut reader).unwrap();
+
+        // Check that we read multiple transactions
+        assert!(txes.len() > 0, "Should read at least one transaction");
+
+        // Print first transaction for debugging
+        let first = &txes[0];
+        println!("First transaction:");
+        println!("  tx_id: {}", first.tx_id);
+        println!("  tx_type: {:?}", first.tx_type);
+        println!("  from_user_id: {}", first.from_user_id);
+        println!("  to_user_id: {}", first.to_user_id);
+        println!("  amount: {}", first.amount);
+        println!("  timestamp: {}", first.timestamp);
+        println!("  status: {:?}", first.status);
+        println!("  description: {}", first.description);
+        println!(
+            "Successfully read {} transactions from binary file",
+            txes.len()
+        );
+
+        // Basic validations
+        assert!(first.tx_id > 0);
+        assert!(first.timestamp > 0);
+    }
 
     #[test]
     fn test_write_to_bin_single_transaction() {

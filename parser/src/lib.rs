@@ -1,3 +1,42 @@
+#![warn(missing_docs)]
+
+//! Transaction parser library for multiple data formats.
+//!
+//! This library provides functionality for parsing, building, and converting transaction data
+//! across different formats including binary, CSV, and text formats.
+//!
+//! # Core Types
+//!
+//! - [`Transaction`] - The main transaction structure containing all transaction details
+//! - [`TxType`] - Enum representing transaction types (Deposit, Transfer, Withdrawal)
+//! - [`Status`] - Enum representing transaction status (Success, Failure, Pending)
+//! - [`TransactionBuilder`] - Builder pattern for constructing transactions
+//!
+//! # Modules
+//!
+//! - [`bin_format`] - Binary format parsing and serialization
+//! - [`csv_format`] - CSV format parsing and writing
+//! - [`txt_format`] - Text format parsing and writing
+//! - [`builder`] - Transaction builder implementation
+//! - [`errors`] - Error types for parsing operations
+//!
+//! # Examples
+//!
+//! ```
+//! use parser::{TransactionBuilder, TxType, Status};
+//!
+//! let transaction = TransactionBuilder::new()
+//!     .tx_id(1)
+//!     .tx_type(TxType::Deposit)
+//!     .from_user_id(100)
+//!     .to_user_id(200)
+//!     .amount(1000)
+//!     .timestamp(1234567890)
+//!     .status(Status::Success)
+//!     .description("Payment".to_string())
+//!     .build();
+//! ```
+
 pub mod bin_format;
 pub mod builder;
 pub mod csv_format;
@@ -9,17 +48,37 @@ use std::str::FromStr;
 
 use crate::errors::TxTypeParseError;
 
+/// Transaction status indicating the current state of a transaction.
+///
+/// # Variants
+///
+/// * `Success` - Transaction completed successfully
+/// * `Failure` - Transaction failed
+/// * `Pending` - Transaction is pending processing
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Status {
+    /// Transaction completed successfully
     Success,
+    /// Transaction failed
     Failure,
+    /// Transaction is pending processing
     Pending,
 }
 
+/// Type of financial transaction.
+///
+/// # Variants
+///
+/// * `Deposit` - Money deposited into an account
+/// * `Transfer` - Money transferred between accounts
+/// * `Withdrawal` - Money withdrawn from an account
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TxType {
+    /// Money deposited into an account
     Deposit,
+    /// Money transferred between accounts
     Transfer,
+    /// Money withdrawn from an account
     Withdrawal,
 }
 
@@ -171,15 +230,55 @@ impl fmt::Display for Status {
     }
 }
 
+/// A transaction record containing all transaction details.
+///
+/// This is the main data structure representing a financial transaction.
+/// It can be parsed from or serialized to various formats (binary, CSV, text).
+///
+/// # Fields
+///
+/// * `tx_id` - Unique transaction identifier
+/// * `tx_type` - Type of transaction (Deposit, Transfer, or Withdrawal)
+/// * `from_user_id` - ID of the user initiating the transaction
+/// * `to_user_id` - ID of the receiving user
+/// * `amount` - Transaction amount (can be negative)
+/// * `timestamp` - Unix timestamp of the transaction
+/// * `status` - Current status of the transaction
+/// * `description` - Human-readable description of the transaction
+///
+/// # Examples
+///
+/// ```
+/// use parser::{Transaction, TxType, Status};
+///
+/// let tx = Transaction {
+///     tx_id: 1,
+///     tx_type: TxType::Deposit,
+///     from_user_id: 100,
+///     to_user_id: 200,
+///     amount: 1000,
+///     timestamp: 1234567890,
+///     status: Status::Success,
+///     description: "Payment".to_string(),
+/// };
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
+    /// Unique transaction identifier
     pub tx_id: u64,
+    /// Type of transaction
     pub tx_type: TxType,
+    /// ID of the user initiating the transaction
     pub from_user_id: u64,
+    /// ID of the receiving user
     pub to_user_id: u64,
+    /// Transaction amount (can be negative)
     pub amount: i64,
+    /// Unix timestamp of the transaction
     pub timestamp: u64,
+    /// Current status of the transaction
     pub status: Status,
+    /// Human-readable description
     pub description: String,
 }
 
@@ -189,6 +288,10 @@ impl fmt::Display for Transaction {
     }
 }
 
+/// Transaction parser utility.
+///
+/// This struct provides parsing functionality for transaction data.
+/// Currently, it serves as a namespace for parser-related operations.
 pub struct Parser {}
 
 #[cfg(test)]

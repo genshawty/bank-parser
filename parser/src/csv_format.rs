@@ -1,7 +1,10 @@
-use std::str::FromStr;
+//! CSV format parsing and writing for transactions.
+//!
+//! This module provides functionality to read and write transaction data in CSV format
+//! with proper header validation and field encoding.
 
 use crate::errors::{ParsingError, TransactionError};
-use crate::{Parser, Status, Transaction, TransactionBuilder, TxType};
+use crate::{Parser, Transaction, TransactionBuilder};
 
 const CSV_HEADER: &str =
     "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION";
@@ -155,18 +158,20 @@ mod tests {
     use super::*;
     use std::io::Cursor;
     use std::path::PathBuf;
+    use std::str::FromStr;
 
-    // Test commented out because it depends on data/records_example.csv which is not published to GitHub
-    // #[test]
-    // fn test_read_from_csv() {
-    //     let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    //     d.push("data/records_example.csv");
-    //     // println!("{}", d.display());
-    //     let file = fs::File::open(d).expect("file could not be opened");
-    //     let mut reader = io::BufReader::new(file);
-    //     let txes = Parser::read_from_csv(&mut reader).expect("reading from csv gone wrong");
-    //     assert!(txes.len() == 1000)
-    // }
+    use crate::{Status, TxType};
+
+    #[test]
+    fn test_read_from_csv() {
+        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        d.push("data/records_example.csv");
+        // println!("{}", d.display());
+        let file = fs::File::open(d).expect("file could not be opened");
+        let mut reader = io::BufReader::new(file);
+        let txes = Parser::read_from_csv(&mut reader).expect("reading from csv gone wrong");
+        assert!(txes.len() == 1000)
+    }
 
     #[test]
     fn test_parser_single_transaction_with_cursor() {
