@@ -39,15 +39,28 @@ impl Parser {
     pub fn read_from_bin<R: std::io::BufRead>(r: &mut R) -> Result<Vec<Transaction>, ParsingError> {
         let mut txes = Vec::new();
         let mut header = [0; 8];
-        while let Ok(_) = r.read_exact(&mut header) {
-            if header[..4] != *BIN_MAGIC {
-                return Err(ParsingError::InvalidDataFormat);
+        loop {
+            match r.read_exact(&mut header) {
+                Ok(_) => {
+                    if header[..4] != *BIN_MAGIC {
+                        return Err(ParsingError::InvalidDataFormat);
+                    }
+                    let data_size = u32::from_be_bytes(header[4..8].try_into()?);
+                    let mut data = vec![0u8; data_size as usize];
+                    r.read_exact(&mut data)?;
+                    let tx = Transaction::try_from_bin(&data)?;
+                    txes.push(tx);
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => {
+                    // handle case if total size is wrong
+                    if txes.len() > 0 {
+                        break;
+                    } else {
+                        return Err(e.into());
+                    }
+                }
+                Err(e) => return Err(e.into()),
             }
-            let data_size = u32::from_be_bytes(header[4..8].try_into()?);
-            let mut data = vec![0u8; data_size as usize];
-            r.read_exact(&mut data)?;
-            let tx = Transaction::try_from_bin(&data)?;
-            txes.push(tx);
         }
         Ok(txes)
     }
